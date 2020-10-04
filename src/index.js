@@ -1,15 +1,13 @@
 import Phaser from 'phaser';
 
-import { RIGHT_BOUND, LEFT_BOUND, DEPTH, FRAME_PERIOD, CURVE, curveFn } from "./constants";
-import getClickedPoint from "./getClickedPoint";
+import { RIGHT_BOUND, LEFT_BOUND, DEPTH, FRAME_PERIOD, curveFn } from "./constants.js";
+import getClickedPoint from "./getClickedPoint.js";
+import buildFrames from "./buildFrames.js";
 
 import checkerboard from './assets/checkerboard.png';
 import verticalCheckerboard from './assets/vertcheckerboard.png';
 import guy from './assets/guy.png';
 import pointImage from './assets/point.png';
-
-import Vector4 from 'phaser/src/math/Vector4';
-
 
 let config = {
   type: Phaser.WEBGL,
@@ -30,6 +28,7 @@ let cursors;
 let frames;
 let characterLegs;
 let characterTorso;
+let weapon;
 let point = undefined;
 let speed = 3;
 let startZ;
@@ -42,51 +41,7 @@ let dash = {
   step: null,
 }
 
-
 let game = new Phaser.Game(config);
-// const highPrecCurveFn = n => (-DEPTH + Math.sqrt((DEPTH)**2 - n**2)) * 10;
-
-function buildFrames(camera) {
-  const floor = camera.createRect({ x: 1, y: 1, z: DEPTH }, FRAME_PERIOD, 'strip', 0);
-  floor.forEach((f, i) => {
-    f.y = curveFn(i);
-  });
-
-  const ceiling = camera.createRect({ x: 1, y: 1, z: DEPTH }, FRAME_PERIOD, 'strip', 0);
-  ceiling.forEach((c, i) => {
-    c.y = -300 + curveFn(i);
-  })
-
-  const walls = camera.createRect({ x: 2, y: 1, z: DEPTH }, { x: 500, y: 0, z: FRAME_PERIOD }, 'vertstrip', 0);
-  const lWalls = [];
-  const rWalls = [];
-  walls.forEach((w, i) => {
-    w.y = -150 + curveFn(i);
-    w.z += 1;
-    if (w.x < 0) {
-      lWalls.push(w);
-    } else {
-      rWalls.push(w);
-    }
-  })
-  const result = [];
-  for (let i = 0; i < DEPTH; i++) {
-    const res = {
-      floor: floor[i],
-      ceiling: ceiling[i],
-      lWall: lWalls[i],
-      rWall: rWalls[i],
-    };
-    if (i % 2 === 1) {
-      res.floor.gameObject.setFrame(1);
-      res.ceiling.gameObject.setFrame(1);
-      res.lWall.gameObject.setFrame(1);
-      res.rWall.gameObject.setFrame(1);
-    }
-    result.push(res);
-  }
-  return result;
-}
 
 function preload () {
   this.load.spritesheet('strip', checkerboard, { frameWidth: 160, frameHeight: 50 });
@@ -97,13 +52,21 @@ function preload () {
 
 function create () {
   camera = this.cameras3d.addPerspectiveCamera(80)
-      .setPosition(0, -100, 730)
+      .setPosition(0, -100, 720)
       .setPixelScale(48);
   frames = buildFrames(camera);
   startZ = frames[0].floor.z;
 
   characterLegs = camera.create(0, -48, 600, 'character', 0);
   characterTorso = camera.create(0, -48, 600, 'character', 4);
+
+  weapon = {
+    fire(ray) {
+
+    },
+    bullets: camera.createMultiple(),
+    wait: 0,
+  };
 
   this.anims.create({
     key: 'walk',
@@ -128,7 +91,6 @@ function create () {
   comboAA = this.input.keyboard.createCombo('AA', { resetOnMatch: true, maxKeyDelay: 300 });
   comboDD = this.input.keyboard.createCombo('DD', { resetOnMatch: true, maxKeyDelay: 300 });
   this.input.keyboard.on('keycombomatch', function (event) {
-    console.log('Key Combo matched!' + event.keyCodes.join(', '));
     const code = event.keyCodes.join('');
     if (code === '6565' && dash.wait === 0) {
       dash.wait = 100;
@@ -139,20 +101,19 @@ function create () {
     }
   });
   this.input.on('pointerdown', (event) => {
-    console.log(event.x, event.y);
     let target = getClickedPoint(event.x, event.y, camera, frames);
-    console.log(target);
 
     const origin = {x: camera.x, y: -60, z: 600};
     const unSimple = { x: target.x - origin.x, y: target.y - origin.y, z: target.z - origin.z }
     const distance = Math.sqrt(unSimple.x**2 + unSimple.y**2 + unSimple.z**2);
+    // invert y because we live in clown world
     const direction = { x: unSimple.x / distance, y: -unSimple.y / distance, z: unSimple.z / distance };
 
+    weapon.fire(ray);
     let ray = {
       origin,
       direction
     }
-    console.log(ray);
 
     if (point !== undefined) {
         point.x = ray.origin.x;
