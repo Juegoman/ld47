@@ -72,7 +72,7 @@ function create () {
   enemy = new Enemy(camera, frames, player, this);
   weapon = new Weapon(camera, frames, enemy, this);
 
-  this.sound.play('song', { volume: 0.5, loop: trued });
+  this.sound.play('song', { volume: 0.5, loop: true });
 
   text = this.add.text(10, 10, '', { font: '16px Courier', fill: '#00ff00' });
   this.sys.canvas.addEventListener('click', () => {
