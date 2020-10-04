@@ -21,6 +21,9 @@ import characterImage from './assets/guy.png';
 import pointImage from './assets/point.png';
 import turretImage from './assets/turret.png';
 import enemyBulletImage from './assets/orangedot.png';
+import song from './assets/LDgametrack.mp3';
+import pewSound from './assets/shoot.wav';
+import bangSound from './assets/gunshot.wav';
 
 let config = {
   type: Phaser.WEBGL,
@@ -42,6 +45,7 @@ let player;
 let weapon;
 let enemy;
 let text;
+let pauseSongPos = 0;
 
 
 
@@ -54,6 +58,9 @@ function preload () {
   this.load.spritesheet('turret', turretImage, { frameWidth: 48, frameHeight: 48 });
   this.load.image('point', pointImage);
   this.load.image('enemybullet', enemyBulletImage);
+  this.load.audio('song', song);
+  this.load.audio('pew', pewSound);
+  this.load.audio('bang', bangSound);
 }
 
 function create () {
@@ -63,11 +70,16 @@ function create () {
   frames = new Frames(camera);
   player = new Player(camera, this);
   enemy = new Enemy(camera, frames, player, this);
-  weapon = new Weapon(camera, frames, enemy);
+  weapon = new Weapon(camera, frames, enemy, this);
+
+  this.sound.play('song', { volume: 0.5, loop: trued });
 
   text = this.add.text(10, 10, '', { font: '16px Courier', fill: '#00ff00' });
   this.sys.canvas.addEventListener('click', () => {
-    if (this.sys.isPaused()) this.sys.resume();
+    if (this.sys.isPaused())  {
+      this.sys.resume();
+      this.sound.play('song', { volume: 0.5, loop: true });
+    }
   })
 }
 
@@ -84,6 +96,7 @@ function update () {
         weapon.fire(this.input.mousePointer.x, this.input.mousePointer.y);
     } else if (!this.sys.isPaused()) {
         this.sys.pause();
+        this.sound.stopAll();
     }
   }
 

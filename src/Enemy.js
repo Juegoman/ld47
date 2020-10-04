@@ -10,7 +10,7 @@ export default class Enemy {
     this.game = game;
     this.enemyList = [];
     this.turrets = camera.createMultiple(10, 'turret', 0, false)
-      .map((t, i) => new Turret(i, t, frames, camera, player));
+      .map((t, i) => new Turret(i, t, frames, camera, player, game));
     this.nextEnemyFrame = 100;
   }
   update(speed) {
@@ -70,12 +70,13 @@ class EnemyBullet extends Bullet {
 }
 
 class Turret {
-  constructor(id, sprite3d, frames, camera, player) {
+  constructor(id, sprite3d, frames, camera, player, game) {
     this.id = `t${id}`,
     this.sprite = sprite3d;
     this.frames = frames;
     this.camera = camera;
     this.player = player;
+    this.game = game;
     this.orientation = 'down';
     this.verticalOffset = 0;
     this.horizontalOffset = 0;
@@ -146,6 +147,7 @@ class Turret {
       const bullet = this.bullets.pop();
       bullet.fire(getUnitVec(origin, target));
       this.activeBullets.push(bullet);
+      this.game.sound.play('bang');
     }
   }
   randomizeOffsets() {

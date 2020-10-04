@@ -3,10 +3,11 @@ import getUnitVec from "./getUnitVec";
 import {LEFT_BOUND, RIGHT_BOUND} from "./constants";
 
 export default class Weapon {
-  constructor(camera, frames, enemy) {
+  constructor(camera, frames, enemy, game) {
     this.frames = frames;
     this.camera = camera;
     this.enemy = enemy;
+    this.game = game;
     this.activeBullets = [];
     this.bullets = camera.createMultiple(40, 'point', 0, false)
       .map((b, i) => new Bullet(i, b, frames, this));
@@ -23,6 +24,7 @@ export default class Weapon {
     const bullet = this.bullets.pop();
     bullet.fire(getUnitVec(origin, target));
     this.activeBullets.push(bullet);
+    this.game.sound.play('pew');
     this.wait = this.WAIT;
   }
   update() {
