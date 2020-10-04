@@ -2,9 +2,10 @@ import Phaser from 'phaser';
 import checkerboard from './assets/checkerboard.png';
 import verticalCheckerboard from './assets/vertcheckerboard.png';
 import guy from './assets/guy.png';
+import pointImage from './assets/point.png';
 
 let config = {
-  type: Phaser.CANVAS,
+  type: Phaser.WEBGL,
   parent: 'phaser-example',
   width: 800,
   height: 600,
@@ -20,7 +21,9 @@ let config = {
 let camera;
 let cursors;
 let frames;
-let character;
+let characterLegs;
+let characterTorso;
+let point = undefined;
 let speed = 3;
 let startZ;
 let text;
@@ -41,6 +44,7 @@ let game = new Phaser.Game(config);
 
 const CURVE = [...Array(DEPTH).keys()].map(n => Math.sqrt(DEPTH**2 - n**2));
 const curveFn = (i) => (-DEPTH + CURVE[i]) * 10;
+// const highPrecCurveFn = n => (-DEPTH + Math.sqrt((DEPTH)**2 - n**2)) * 10;
 
 function buildFrames(camera) {
   const floor = camera.createRect({ x: 1, y: 1, z: DEPTH }, FRAME_PERIOD, 'strip', 0);
@@ -87,6 +91,7 @@ function preload () {
   this.load.spritesheet('strip', checkerboard, { frameWidth: 160, frameHeight: 50 });
   this.load.spritesheet('vertstrip', verticalCheckerboard, { frameWidth: 64, frameHeight: 160 })
   this.load.spritesheet('character', guy, { frameHeight: 56, frameWidth: 32 });
+  this.load.image('point', pointImage);
 }
 
 function create () {
@@ -96,20 +101,22 @@ function create () {
   frames = buildFrames(camera);
   startZ = frames[0].floor.z;
 
-  character = camera.create(0, -48, 600, 'character', 0);
+  characterLegs = camera.create(0, -48, 600, 'character', 0);
+  characterTorso = camera.create(0, -48, 600, 'character', 4);
+
   this.anims.create({
     key: 'walk',
-    frames: this.anims.generateFrameNumbers('character', { frames: [0, 1, 0, 2] }),
+    frames: this.anims.generateFrameNumbers('character', { frames: [1, 3, 2, 3] }),
     frameRate: 3,
     repeat: -1,
   })
   this.anims.create({
     key: 'run',
-    frames: this.anims.generateFrameNumbers('character', { frames: [0, 1, 0, 2] }),
+    frames: this.anims.generateFrameNumbers('character', { frames: [1, 3, 2, 3] }),
     frameRate: 6,
     repeat: -1,
   })
-  character.gameObject.play('walk');
+  characterLegs.gameObject.play('walk');
   cursors = this.input.keyboard.addKeys({
     'up': Phaser.Input.Keyboard.KeyCodes.W,
     'down': Phaser.Input.Keyboard.KeyCodes.S,
@@ -129,6 +136,75 @@ function create () {
       dash.wait = 100;
       dash.dir = 'right';
     }
+  });
+  this.input.on('pointerdown', (event) => {
+    console.log(event.x, event.y);
+    let ray = camera.getPickRay(event.x, event.y);
+    console.log(ray);
+    if (point !== undefined) {
+      point.x = ray.origin.x;
+      point.y = ray.origin.y;
+      point.z = ray.origin.z;
+    } else {
+      point = camera.create(ray.origin.x, ray.origin.y, ray.origin.z, 'point', 0);
+    }
+    point.originalRay = ray;
+    const times = {
+      posX: 9999,
+      negX: 9999,
+      posY: 9999,
+      negY: 9999,
+    }
+
+    if (ray.direction.x > 0.1) {
+      // rwall calc
+      times.posX = (RIGHT_BOUND - ray.origin.x) / ray.direction.x;
+    }
+    if (ray.direction.x < -0.1) {
+      // lwall calc
+      times.negX = (LEFT_BOUND - ray.origin.x) / ray.direction.x;
+    }
+    if (ray.direction.y < 0.4) {
+      // floor calc ray march until out of bounds to get approximation
+      let hitFrame = 0;
+      let found = false;
+      let y;
+      while (!found) {
+        let frame = frames[hitFrame].floor;
+        let frameTime = (frame.z - ray.origin.z) / ray.direction.z;
+        y = ray.origin.y - ray.direction.y * frameTime;
+        if (y > frame.y) {
+          found = true;
+          times.posY = frameTime;
+        } else {
+          hitFrame += 1;
+          if (hitFrame === DEPTH) {
+            found = true;
+          }
+        }
+      }
+    }
+    if (ray.direction.y > 0.3) {
+      // ceiling calc
+      let hitFrame = 0;
+      let found = false;
+      let y;
+      while (!found) {
+        let frame = frames[hitFrame].ceiling;
+        let frameTime = (frame.z - ray.origin.z) / ray.direction.z;
+        y = ray.origin.y - ray.direction.y * frameTime;
+        if (y > frame.y) {
+          found = true;
+          times.negY = frameTime;
+        } else {
+          hitFrame += 1;
+          if (hitFrame === DEPTH) {
+            found = true;
+          }
+        }
+      }
+    }
+    console.log(times);
   });
 
   text = this.add.text(10, 10, '', { font: '16px Courier', fill: '#00ff00' });
@@ -178,18 +254,28 @@ function update () {
   if (camera.x >= RIGHT_BOUND) camera.x = RIGHT_BOUND;
   dash.wait = (dash.wait === 0) ? 0 : dash.wait - 1;
 
-  character.x = camera.x;
+  characterLegs.x = camera.x;
+  characterTorso.x = camera.x;
 
   speed = 3;
   if (cursors.up.isDown) {
     speed = 5;
-    character.gameObject.play('run', true);
+    characterLegs.gameObject.play('run', true);
   } else {
-    character.gameObject.play('walk', true);
+    characterLegs.gameObject.play('walk', true);
     if (cursors.down.isDown) {
       speed = 1;
     }
   }
+  if (point !== undefined) {
+    point.x = point.x + (point.originalRay.direction.x * 10);
+    point.y = point.y - (point.originalRay.direction.y * 10);
+    point.z = point.z + (point.originalRay.direction.z * 10);
+  }
+  const origRay = (point && point.originalRay) ? point.originalRay : {
+    direction: { x: 'n/a', y: 'n/a', z: 'n/a' },
+  };
+  const pt = (point) ? point : { x: 'n/a', y: 'n/a', z: 'n/a' };
   camera.update();
   text.setText([
     'camera.x: ' + camera.x,
@@ -197,5 +283,11 @@ function update () {
     'camera.z: ' + camera.z,
     'dash.dir: ' + dash.dir,
     'dash.wait: ' + dash.wait,
+    'point.originalRay.direction.x: ' + origRay.direction.x,
+    'point.originalRay.direction.y: ' + origRay.direction.y,
+    'point.originalRay.direction.z: ' + origRay.direction.z,
+    'point.x: ' + pt.x,
+    'point.y: ' + pt.y,
+    'point.z: ' + pt.z,
   ]);
 }
