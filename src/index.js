@@ -66,6 +66,9 @@ function create () {
   weapon = new Weapon(camera, frames, enemy);
 
   text = this.add.text(10, 10, '', { font: '16px Courier', fill: '#00ff00' });
+  this.sys.canvas.addEventListener('click', () => {
+    if (this.sys.isPaused()) this.sys.resume();
+  })
 }
 
 function update () {
@@ -74,8 +77,16 @@ function update () {
   frames.update(speed);
   player.update();
   if (this.input.mousePointer.primaryDown) {
-    weapon.fire(this.input.mousePointer.x, this.input.mousePointer.y);
+    if (this.input.mousePointer.x <= 800 &&
+      this.input.mousePointer.x >= 0 &&
+      this.input.mousePointer.y <= 600 &&
+      this.input.mousePointer.y >= 0) {
+        weapon.fire(this.input.mousePointer.x, this.input.mousePointer.y);
+    } else if (!this.sys.isPaused()) {
+        this.sys.pause();
+    }
   }
+
   weapon.update();
   enemy.update(speed);
   camera.update();
