@@ -40,10 +40,10 @@ export default class Player {
     }
     game.input.keyboard.on('keycombomatch', function (event) {
       const code = event.keyCodes.join('');
-      if (code === '6565' && dash.wait === 0) {
+      if (code === '6565' && this.dash.wait === 0) {
         this.dash.wait = 100;
         this.dash.dir = 'left';
-      } else if (code === '6868' && dash.wait === 0) {
+      } else if (code === '6868' && this.dash.wait === 0) {
         this.dash.wait = 100;
         this.dash.dir = 'right';
       }
