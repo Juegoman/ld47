@@ -14,6 +14,7 @@ export default class Player {
       'left': Phaser.Input.Keyboard.KeyCodes.A,
       'right': Phaser.Input.Keyboard.KeyCodes.D
     });
+    this.health = 10
 
 
     game.anims.create({
@@ -38,7 +39,7 @@ export default class Player {
       dir: null,
       step: null,
     }
-    game.input.keyboard.on('keycombomatch', function (event) {
+    game.input.keyboard.on('keycombomatch', event => {
       const code = event.keyCodes.join('');
       if (code === '6565' && this.dash.wait === 0) {
         this.dash.wait = 100;
@@ -50,40 +51,56 @@ export default class Player {
     });
   }
   update() {
-    if (this.cursors.left.isDown) {
-      this.camera.x -= 4;
-    } else if (this.cursors.right.isDown) {
-      this.camera.x += 4;
-    }
-    if (this.dash.dir !== null) {
-      if (this.dash.dir === 'left') {
-        this.camera.x -= 15;
-      } else if (this.dash.dir === 'right') {
-        this.camera.x += 15
+    if (this.alive) {
+      if (this.cursors.left.isDown) {
+        this.camera.x -= 4;
+      } else if (this.cursors.right.isDown) {
+        this.camera.x += 4;
       }
-      if (this.dash.step === null || this.dash.step < 4) {
-        this.dash.step = (this.dash.step === null) ? 1 : this.dash.step + 1;
+      if (this.dash.dir !== null) {
+        if (this.dash.dir === 'left') {
+          this.camera.x -= 15;
+        } else if (this.dash.dir === 'right') {
+          this.camera.x += 15
+        }
+        if (this.dash.step === null || this.dash.step < 4) {
+          this.dash.step = (this.dash.step === null) ? 1 : this.dash.step + 1;
+        } else {
+          this.dash.step = null;
+          this.dash.dir = null;
+        }
+      }
+      if (this.camera.x <= LEFT_BOUND) this.camera.x = LEFT_BOUND;
+      if (this.camera.x >= RIGHT_BOUND) this.camera.x = RIGHT_BOUND;
+      this.dash.wait = (this.dash.wait === 0) ? 0 : this.dash.wait - 1;
+
+      this.legs.x = this.camera.x;
+      this.torso.x = this.camera.x;
+
+      this.speed = 3;
+      if (this.cursors.up.isDown) {
+        this.speed = 5;
+        this.legs.gameObject.play('run', true);
       } else {
-        this.dash.step = null;
-        this.dash.dir = null;
+        this.legs.gameObject.play('walk', true);
+        if (this.cursors.down.isDown) {
+          this.speed = 1;
+        }
       }
     }
-    if (this.camera.x <= LEFT_BOUND) this.camera.x = LEFT_BOUND;
-    if (this.camera.x >= RIGHT_BOUND) this.camera.x = RIGHT_BOUND;
-    this.dash.wait = (this.dash.wait === 0) ? 0 : this.dash.wait - 1;
-
-    this.legs.x = this.camera.x;
-    this.torso.x = this.camera.x;
-
-    this.speed = 3;
-    if (this.cursors.up.isDown) {
-      this.speed = 5;
-      this.legs.gameObject.play('run', true);
-    } else {
-      this.legs.gameObject.play('walk', true);
-      if (this.cursors.down.isDown) {
-        this.speed = 1;
-      }
+  }
+  hit() {
+    this.health -= (this.health) ? 1 : 0;
+    if (this.health === 0) {
+      this.speed = 0;
+      this.legs.visible = false;
+      this.torso.visible = false;
+      this.legs.y = 1000;
+      this.torso.y = 1000;
     }
+  }
+
+  get alive() {
+    return this.health > 0;
   }
 }

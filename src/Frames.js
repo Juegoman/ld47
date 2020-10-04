@@ -42,6 +42,7 @@ export default class Frames {
     }
     this.camera = camera;
     this.startZ = this.getFrame(0).ground.z;
+    this.distanceTravelled = 0;
   }
   getFrame(index) {
     return this.frames[index];
@@ -72,6 +73,7 @@ export default class Frames {
           frame.lWall.y = -150 + curveFn(i);
           frame.rWall.y = -150 + curveFn(i);
         });
+        this.distanceTravelled += 1;
       }
     });
   }

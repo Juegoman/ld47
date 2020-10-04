@@ -1,56 +1,34 @@
 import getClickedPoint from './getClickedPoint';
+import getUnitVec from "./getUnitVec";
 import {LEFT_BOUND, RIGHT_BOUND} from "./constants";
 
 export default class Weapon {
-  constructor(camera, frames) {
+  constructor(camera, frames, enemy) {
     this.frames = frames;
     this.camera = camera;
+    this.enemy = enemy;
     this.activeBullets = [];
-    this.bullets = camera.createMultiple(30, 'point', 0, false)
-      .map((b, i) => {
-        b.id = i;
-        return b;
-      });
+    this.bullets = camera.createMultiple(40, 'point', 0, false)
+      .map((b, i) => new Bullet(i, b, frames, this));
     this.wait = 0;
-    this.BULLET_SPEED = 18;
+    this.WAIT = 15;
   }
   get activeBulletQty() { return this.activeBullets.length; }
   get bulletPoolQty() { return this.bullets.length; }
   fire(x, y) {
-    if (this.wait > 0) { return; }
+    if (this.wait > 0) return;
 
     let target = getClickedPoint(x, y, this.camera, this.frames);
-
     const origin = {x: this.camera.x, y: -60, z: 600};
-    const unSimple = { x: target.x - origin.x, y: target.y - origin.y, z: target.z - origin.z }
-    const distance = Math.sqrt(unSimple.x**2 + unSimple.y**2 + unSimple.z**2);
-    // invert y because we live in clown world
-    const direction = { x: unSimple.x / distance, y: -unSimple.y / distance, z: unSimple.z / distance };
-    let ray = { origin, direction, target};
-
     const bullet = this.bullets.pop();
-    bullet.visible = true;
-    bullet.x = ray.origin.x;
-    bullet.y = ray.origin.y;
-    bullet.z = ray.origin.z;
-    bullet.originalRay = ray;
+    bullet.fire(getUnitVec(origin, target));
     this.activeBullets.push(bullet);
-    this.wait = 15;
+    this.wait = this.WAIT;
   }
   update() {
     const cleanup = [];
     this.activeBullets.forEach((b) => {
-      b.x = b.x + (b.originalRay.direction.x * this.BULLET_SPEED);
-      b.y = b.y - (b.originalRay.direction.y * this.BULLET_SPEED);
-      b.z = b.z + (b.originalRay.direction.z * this.BULLET_SPEED);
-      if (this.boundsCheck(b)) {
-        this.hitspark(b);
-        b.x = 0;
-        b.y = 0;
-        b.z = 0;
-        b.visible = false;
-        cleanup.push(b.id);
-      }
+      if (b.update()) cleanup.push(b.id);
     });
     cleanup.forEach(id => {
       const index = this.activeBullets.findIndex(b => b.id === id);
@@ -58,14 +36,83 @@ export default class Weapon {
     });
     this.wait -= (this.wait > 0) ? 1 : 0;
   }
-  boundsCheck(bullet) {
-    const frame = this.frames.findClosestFrame(bullet.z);
-    return bullet.x < LEFT_BOUND - 10 ||
-      bullet.x > RIGHT_BOUND + 10 ||
-      bullet.y < frame.ceiling.y + 25 ||
-      bullet.y > frame.ground.y - 25;
+}
+export class Bullet {
+  constructor(id, bullet, frames, parent) {
+    this.id = id;
+    this.bullet = bullet;
+    this.frames = frames;
+    this.parent = parent;
+    this.originalRay = null;
+
+    this.BASE_SPEED = 18;
   }
-  hitspark(bullet) {
+  fire(ray) {
+    this.bullet.visible = true;
+    this.bullet.x = ray.origin.x;
+    this.bullet.y = ray.origin.y;
+    this.bullet.z = ray.origin.z;
+    this.originalRay = ray;
+  }
+  update() {
+    if (this.originalRay === null) return true;
+    this.bullet.x = this.x + (this.originalRay.direction.x * this.bulletSpeed);
+    this.bullet.y = this.y - (this.originalRay.direction.y * this.bulletSpeed);
+    this.bullet.z = this.z + (this.originalRay.direction.z * this.bulletSpeed);
+    if (this.boundsCheck) {
+      this.hitspark();
+      this.cleanUp();
+      return true;
+    }
+    const targetBoundsCheck = this.targetBoundsCheck
+    if (targetBoundsCheck) {
+      return this.handleHit(targetBoundsCheck);
+    }
+    return false;
+  }
+  hitspark() {
     // todo
+  }
+  cleanUp() {
+    this.bullet.x = 0;
+    this.bullet.y = 0;
+    this.bullet.z = 0;
+    this.originalRay = null;
+    this.bullet.visible = false;
+  }
+  handleHit(target) {
+    this.parent.enemy.getById(target).hit();
+    this.hitspark();
+    this.cleanUp();
+    return true;
+  }
+  get bulletSpeed() {
+    return this.BASE_SPEED;
+  }
+  get targetBoundsCheck() {
+    const hit = this.parent.enemy.enemyList.filter(enemy => {
+      const { x, y, z } = this;
+      const target = {x: enemy.x, y: enemy.y, z: enemy.z};
+      const full = { x: target.x - x, y: target.y - y, z: target.z - z };
+      const distance = Math.sqrt(full.x**2 + full.y**2 + full.z**2);
+      return distance < 30;
+    });
+    return (hit.length > 0) ? hit[0].id : null;
+  }
+  get boundsCheck() {
+    const frame = this.frames.findClosestFrame(this.z);
+    return this.x < LEFT_BOUND - 10 ||
+      this.x > RIGHT_BOUND + 10 ||
+      this.y < frame.ceiling.y + 25 ||
+      this.y > frame.ground.y - 25;
+  }
+  get x() {
+    return this.bullet.x;
+  }
+  get y() {
+    return this.bullet.y;
+  }
+  get z() {
+    return this.bullet.z;
   }
 }
