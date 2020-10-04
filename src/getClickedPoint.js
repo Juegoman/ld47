@@ -1,4 +1,4 @@
-import { RIGHT_BOUND, LEFT_BOUND, DEPTH } from "./constants.js";
+import { RIGHT_BOUND, LEFT_BOUND, DEPTH } from './constants';
 
 export default function (x, y, camera, frames) {
     let ray = camera.getPickRay(x, y);

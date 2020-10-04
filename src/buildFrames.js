@@ -1,4 +1,4 @@
-import {curveFn, DEPTH, FRAME_PERIOD} from "./constants.js";
+import {curveFn, DEPTH, FRAME_PERIOD} from './constants';
 
 export default function (camera) {
     const floor = camera.createRect({ x: 1, y: 1, z: DEPTH }, FRAME_PERIOD, 'strip', 0);

@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 
-import { RIGHT_BOUND, LEFT_BOUND, DEPTH, FRAME_PERIOD, curveFn } from "./constants.js";
-import getClickedPoint from "./getClickedPoint.js";
-import buildFrames from "./buildFrames.js";
+import { RIGHT_BOUND, LEFT_BOUND, DEPTH, FRAME_PERIOD, curveFn } from './constants';
+import getClickedPoint from './getClickedPoint';
+import buildFrames from './buildFrames';
 
 import checkerboard from './assets/checkerboard.png';
 import verticalCheckerboard from './assets/vertcheckerboard.png';
@@ -29,7 +29,6 @@ let frames;
 let characterLegs;
 let characterTorso;
 let weapon;
-let point = undefined;
 let speed = 3;
 let startZ;
 let text;
@@ -39,6 +38,10 @@ let dash = {
   wait: 0,
   dir: null,
   step: null,
+}
+
+function findClosestFrame(z) {
+  return frames.reduce((closest, current) => ((Math.abs(closest.floor.z - z) < Math.abs(current.floor.z - z)) ? closest : current));
 }
 
 let game = new Phaser.Game(config);
@@ -61,11 +64,69 @@ function create () {
   characterTorso = camera.create(0, -48, 600, 'character', 4);
 
   weapon = {
-    fire(ray) {
+    fire(x, y) {
+      if (this.wait > 0) { return; }
 
+      let target = getClickedPoint(x, y, camera, frames);
+
+      const origin = {x: camera.x, y: -60, z: 600};
+      const unSimple = { x: target.x - origin.x, y: target.y - origin.y, z: target.z - origin.z }
+      const distance = Math.sqrt(unSimple.x**2 + unSimple.y**2 + unSimple.z**2);
+      // invert y because we live in clown world
+      const direction = { x: unSimple.x / distance, y: -unSimple.y / distance, z: unSimple.z / distance };
+      let ray = {
+        origin,
+        direction,
+        target,
+      }
+
+      const bullet = this.bullets.pop();
+      bullet.visible = true;
+      bullet.x = ray.origin.x;
+      bullet.y = ray.origin.y;
+      bullet.z = ray.origin.z;
+      bullet.originalRay = ray;
+      this.activeBullets.push(bullet);
+      this.wait = 15;
     },
-    bullets: camera.createMultiple(),
+    update() {
+      const cleanup = [];
+      this.activeBullets.forEach((b) => {
+        b.x = b.x + (b.originalRay.direction.x * 10);
+        b.y = b.y - (b.originalRay.direction.y * 10);
+        b.z = b.z + (b.originalRay.direction.z * 10);
+        if (this.boundsCheck(b)) {
+          this.hitspark(b);
+          b.x = 0;
+          b.y = 0;
+          b.z = 0;
+          b.visible = false;
+          cleanup.push(b.id);
+        }
+      });
+      cleanup.forEach(id => {
+        const index = this.activeBullets.findIndex(b => b.id === id);
+        this.bullets.push(...this.activeBullets.splice(index, 1));
+      });
+      this.wait -= (this.wait > 0) ? 1 : 0;
+    },
+    boundsCheck(bullet) {
+      const frame = findClosestFrame(bullet.z);
+      return bullet.x < LEFT_BOUND - 10 ||
+          bullet.x > RIGHT_BOUND + 10 ||
+          bullet.y < frame.ceiling.y + 25 ||
+          bullet.y > frame.floor.y - 25;
+    },
+    hitspark(bullet) {
+      // todo
+    },
+    activeBullets: [],
+    bullets: camera.createMultiple(30, 'point', 0, false).map((b, i) => {
+      b.id = i;
+      return b;
+    }),
     wait: 0,
+    BULLET_SPEED: 18,
   };
 
   this.anims.create({
@@ -99,30 +160,6 @@ function create () {
       dash.wait = 100;
       dash.dir = 'right';
     }
-  });
-  this.input.on('pointerdown', (event) => {
-    let target = getClickedPoint(event.x, event.y, camera, frames);
-
-    const origin = {x: camera.x, y: -60, z: 600};
-    const unSimple = { x: target.x - origin.x, y: target.y - origin.y, z: target.z - origin.z }
-    const distance = Math.sqrt(unSimple.x**2 + unSimple.y**2 + unSimple.z**2);
-    // invert y because we live in clown world
-    const direction = { x: unSimple.x / distance, y: -unSimple.y / distance, z: unSimple.z / distance };
-
-    weapon.fire(ray);
-    let ray = {
-      origin,
-      direction
-    }
-
-    if (point !== undefined) {
-        point.x = ray.origin.x;
-        point.y = ray.origin.y;
-        point.z = ray.origin.z;
-    } else {
-        point = camera.create(ray.origin.x, ray.origin.y, ray.origin.z, 'point', 0);
-    }
-    point.originalRay = ray;
   });
 
   text = this.add.text(10, 10, '', { font: '16px Courier', fill: '#00ff00' });
@@ -185,27 +222,16 @@ function update () {
       speed = 1;
     }
   }
-  if (point !== undefined) {
-    point.x = point.x + (point.originalRay.direction.x * 10);
-    point.y = point.y - (point.originalRay.direction.y * 10);
-    point.z = point.z + (point.originalRay.direction.z * 10);
+  if (this.input.mousePointer.primaryDown) {
+    weapon.fire(this.input.mousePointer.x, this.input.mousePointer.y);
   }
-  const origRay = (point && point.originalRay) ? point.originalRay : {
-    direction: { x: 'n/a', y: 'n/a', z: 'n/a' },
-  };
-  const pt = (point) ? point : { x: 'n/a', y: 'n/a', z: 'n/a' };
+  weapon.update();
   camera.update();
   text.setText([
     'camera.x: ' + camera.x,
-    'camera.y: ' + camera.y,
-    'camera.z: ' + camera.z,
-    'dash.dir: ' + dash.dir,
     'dash.wait: ' + dash.wait,
-    'point.originalRay.direction.x: ' + origRay.direction.x,
-    'point.originalRay.direction.y: ' + origRay.direction.y,
-    'point.originalRay.direction.z: ' + origRay.direction.z,
-    'point.x: ' + pt.x,
-    'point.y: ' + pt.y,
-    'point.z: ' + pt.z,
+    'weapon.wait: ' + weapon.wait,
+    'weapon.activeBullets.length: ' + weapon.activeBullets.length,
+    'weapon.bullets.length: ' + weapon.bullets.length,
   ]);
 }
