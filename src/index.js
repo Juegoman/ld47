@@ -1,8 +1,15 @@
 import Phaser from 'phaser';
+
+import { RIGHT_BOUND, LEFT_BOUND, DEPTH, FRAME_PERIOD, CURVE, curveFn } from "./constants";
+import getClickedPoint from "./getClickedPoint";
+
 import checkerboard from './assets/checkerboard.png';
 import verticalCheckerboard from './assets/vertcheckerboard.png';
 import guy from './assets/guy.png';
 import pointImage from './assets/point.png';
+
+import Vector4 from 'phaser/src/math/Vector4';
+
 
 let config = {
   type: Phaser.WEBGL,
@@ -35,15 +42,8 @@ let dash = {
   step: null,
 }
 
-const RIGHT_BOUND = 190;
-const LEFT_BOUND = -1 * RIGHT_BOUND;
-const DEPTH = 80;
-const FRAME_PERIOD = 20;
 
 let game = new Phaser.Game(config);
-
-const CURVE = [...Array(DEPTH).keys()].map(n => Math.sqrt(DEPTH**2 - n**2));
-const curveFn = (i) => (-DEPTH + CURVE[i]) * 10;
 // const highPrecCurveFn = n => (-DEPTH + Math.sqrt((DEPTH)**2 - n**2)) * 10;
 
 function buildFrames(camera) {
@@ -62,6 +62,7 @@ function buildFrames(camera) {
   const rWalls = [];
   walls.forEach((w, i) => {
     w.y = -150 + curveFn(i);
+    w.z += 1;
     if (w.x < 0) {
       lWalls.push(w);
     } else {
@@ -139,72 +140,28 @@ function create () {
   });
   this.input.on('pointerdown', (event) => {
     console.log(event.x, event.y);
-    let ray = camera.getPickRay(event.x, event.y);
+    let target = getClickedPoint(event.x, event.y, camera, frames);
+    console.log(target);
+
+    const origin = {x: camera.x, y: -60, z: 600};
+    const unSimple = { x: target.x - origin.x, y: target.y - origin.y, z: target.z - origin.z }
+    const distance = Math.sqrt(unSimple.x**2 + unSimple.y**2 + unSimple.z**2);
+    const direction = { x: unSimple.x / distance, y: -unSimple.y / distance, z: unSimple.z / distance };
+
+    let ray = {
+      origin,
+      direction
+    }
     console.log(ray);
+
     if (point !== undefined) {
-      point.x = ray.origin.x;
-      point.y = ray.origin.y;
-      point.z = ray.origin.z;
+        point.x = ray.origin.x;
+        point.y = ray.origin.y;
+        point.z = ray.origin.z;
     } else {
-      point = camera.create(ray.origin.x, ray.origin.y, ray.origin.z, 'point', 0);
+        point = camera.create(ray.origin.x, ray.origin.y, ray.origin.z, 'point', 0);
     }
     point.originalRay = ray;
-    const times = {
-      posX: 9999,
-      negX: 9999,
-      posY: 9999,
-      negY: 9999,
-    }
-
-    if (ray.direction.x > 0.1) {
-      // rwall calc
-      times.posX = (RIGHT_BOUND - ray.origin.x) / ray.direction.x;
-    }
-    if (ray.direction.x < -0.1) {
-      // lwall calc
-      times.negX = (LEFT_BOUND - ray.origin.x) / ray.direction.x;
-    }
-    if (ray.direction.y < 0.4) {
-      // floor calc ray march until out of bounds to get approximation
-      let hitFrame = 0;
-      let found = false;
-      let y;
-      while (!found) {
-        let frame = frames[hitFrame].floor;
-        let frameTime = (frame.z - ray.origin.z) / ray.direction.z;
-        y = ray.origin.y - ray.direction.y * frameTime;
-        if (y > frame.y) {
-          found = true;
-          times.posY = frameTime;
-        } else {
-          hitFrame += 1;
-          if (hitFrame === DEPTH) {
-            found = true;
-          }
-        }
-      }
-    }
-    if (ray.direction.y > 0.3) {
-      // ceiling calc
-      let hitFrame = 0;
-      let found = false;
-      let y;
-      while (!found) {
-        let frame = frames[hitFrame].ceiling;
-        let frameTime = (frame.z - ray.origin.z) / ray.direction.z;
-        y = ray.origin.y - ray.direction.y * frameTime;
-        if (y > frame.y) {
-          found = true;
-          times.negY = frameTime;
-        } else {
-          hitFrame += 1;
-          if (hitFrame === DEPTH) {
-            found = true;
-          }
-        }
-      }
-    }
-    console.log(times);
   });
 
   text = this.add.text(10, 10, '', { font: '16px Courier', fill: '#00ff00' });
@@ -220,8 +177,8 @@ function update () {
     if (floor.z > (camera.z + DEPTH)) {
       floor.z = startZ;
       ceiling.z = startZ;
-      lWall.z = startZ;
-      rWall.z = startZ;
+      lWall.z = startZ + 1;
+      rWall.z = startZ + 1;
       // sort frames by z pos desc and assign y pos from curve
       const sorted = [...frames].sort((a, b) => b.floor.z - a.floor.z);
       sorted.forEach((frame, i) => {
