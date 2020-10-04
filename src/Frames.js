@@ -32,12 +32,10 @@ export default class Frames {
         lWall: lWalls[i],
         rWall: rWalls[i],
       };
-      if (i % 2 === 1) {
-        res.ground.gameObject.setFrame(1);
-        res.ceiling.gameObject.setFrame(1);
-        res.lWall.gameObject.setFrame(1);
-        res.rWall.gameObject.setFrame(1);
-      }
+      res.ground.gameObject.setFrame(i % 4);
+      res.ceiling.gameObject.setFrame(i % 4);
+      res.lWall.gameObject.setFrame(i % 4);
+      res.rWall.gameObject.setFrame(i % 4);
       this.frames.push(res);
     }
     this.camera = camera;
