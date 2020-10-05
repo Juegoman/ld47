@@ -3,13 +3,13 @@ import Phaser from 'phaser';
 import GameModule from './GameModule';
 
 export default class Player extends GameModule {
-  constructor(gameModules, game) {
+  constructor(gameModules, scene) {
     super(gameModules);
-    this.game = game;
+    this.scene = scene;
     this.legs = this.camera.create(0, -48, 600, 'character', 0);
     this.torso = this.camera.create(0, -48, 600, 'character', 4);
     this.speed = 3
-    this.cursors = game.input.keyboard.addKeys({
+    this.cursors = scene.input.keyboard.addKeys({
       'up': Phaser.Input.Keyboard.KeyCodes.W,
       'down': Phaser.Input.Keyboard.KeyCodes.S,
       'left': Phaser.Input.Keyboard.KeyCodes.A,
@@ -18,29 +18,29 @@ export default class Player extends GameModule {
     this.health = 10
 
 
-    game.anims.create({
+    scene.anims.create({
       key: 'walk',
-      frames: game.anims.generateFrameNumbers('character', { frames: [1, 3, 2, 3] }),
+      frames: scene.anims.generateFrameNumbers('character', { frames: [1, 3, 2, 3] }),
       frameRate: 3,
       repeat: -1,
     });
-    game.anims.create({
+    scene.anims.create({
       key: 'run',
-      frames: game.anims.generateFrameNumbers('character', { frames: [1, 3, 2, 3] }),
+      frames: scene.anims.generateFrameNumbers('character', { frames: [1, 3, 2, 3] }),
       frameRate: 6,
       repeat: -1,
     });
     this.legs.gameObject.play('walk');
     this.combos = {
-      AA: game.input.keyboard.createCombo('AA', { resetOnMatch: true, maxKeyDelay: 235 }),
-      DD: game.input.keyboard.createCombo('DD', { resetOnMatch: true, maxKeyDelay: 235 }),
+      AA: scene.input.keyboard.createCombo('AA', { resetOnMatch: true, maxKeyDelay: 235 }),
+      DD: scene.input.keyboard.createCombo('DD', { resetOnMatch: true, maxKeyDelay: 235 }),
     }
     this.dash = {
       wait: 0,
       dir: null,
       step: null,
     }
-    game.input.keyboard.on('keycombomatch', event => {
+    scene.input.keyboard.on('keycombomatch', event => {
       const code = event.keyCodes.join('');
       if (code === '6565' && this.dash.wait === 0) {
         this.dash.wait = 100;
@@ -104,9 +104,9 @@ export default class Player extends GameModule {
       this.torso.visible = false;
       this.legs.y = 1000;
       this.torso.y = 1000;
-      this.game.sound.play('explode');
+      this.scene.sound.play('explode');
     } else {
-      this.game.sound.play('hit', { volume: 0.5 });
+      this.scene.sound.play('hit', { volume: 0.5 });
     }
   }
 
@@ -131,5 +131,8 @@ export default class Player extends GameModule {
   }
   get z() {
     return PLAYER_Z;
+  }
+  get coords() {
+    return { x: this.x, y: this.y, z: this.z };
   }
 }

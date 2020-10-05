@@ -4,9 +4,9 @@ import {LEFT_BOUND, RIGHT_BOUND} from "./constants";
 import GameModule from "./GameModule";
 
 export default class Weapon extends GameModule {
-  constructor(gameModules, game) {
+  constructor(gameModules, scene) {
     super(gameModules);
-    this.game = game;
+    this.scene = scene;
     this.activeBullets = [];
     this.bullets = this.camera.createMultiple(40, 'point', 0, false)
       .map((b, i) => new Bullet(i, b, this.frames, this));
@@ -23,7 +23,7 @@ export default class Weapon extends GameModule {
     const bullet = this.bullets.pop();
     bullet.fire(getUnitVec(origin, target));
     this.activeBullets.push(bullet);
-    this.game.sound.play('pew');
+    this.scene.sound.play('pew');
     this.wait = this.WAIT;
   }
   update() {
@@ -72,7 +72,7 @@ export class Bullet {
     return false;
   }
   hitspark() {
-    // todo
+    this.parent.hitspark.spawn(this.x, this.y, this.z);
   }
   cleanUp() {
     this.bullet.x = 0;

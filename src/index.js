@@ -21,11 +21,19 @@ import characterImage from './assets/guy.png';
 import pointImage from './assets/point.png';
 import turretImage from './assets/turret.png';
 import enemyBulletImage from './assets/orangedot.png';
+import droneImage from './assets/droneludum2020.png';
+import trooperImage from './assets/trooper.png';
+import hitsparkImage from './assets/hitspark.png';
+// import fireParticle1 from './assets/fire1.png';
+// import fireParticle2 from './assets/fire2.png';
+// import fireParticle3 from './assets/fire3.png';
+// import smokeParticle from './assets/smoke.png';
 import song from './assets/LDgametrack.mp3';
 import pewSound from './assets/shoot.wav';
 import bangSound from './assets/gunshot.wav';
 import explodeSound from './assets/explode.wav';
 import hitSound from './assets/hit.wav';
+import HitsparkManager from "./Hitspark";
 
 let config = {
   type: Phaser.WEBGL,
@@ -47,6 +55,7 @@ const gameModules = {
   player: null,
   weapon: null,
   enemy: null,
+  hitspark: null,
 }
 let healthText;
 let dashText;
@@ -56,9 +65,12 @@ let game = new Phaser.Game(config);
 
 function preload () {
   this.load.spritesheet('strip', checkerboard, { frameWidth: 160, frameHeight: 50 });
-  this.load.spritesheet('vertstrip', verticalCheckerboard, { frameWidth: 64, frameHeight: 160 })
-  this.load.spritesheet('character', characterImage, { frameHeight: 56, frameWidth: 32 });
+  this.load.spritesheet('vertstrip', verticalCheckerboard, { frameWidth: 64, frameHeight: 160 });
+  this.load.spritesheet('character', characterImage, { frameWidth: 32, frameHeight: 56 });
   this.load.spritesheet('turret', turretImage, { frameWidth: 48, frameHeight: 48 });
+  this.load.spritesheet('drone', droneImage, { frameWidth: 68, frameHeight: 43 });
+  this.load.spritesheet('trooper', trooperImage, { frameWidth: 30, frameHeight: 58 });
+  this.load.spritesheet('hitspark', hitsparkImage, { frameWidth: 40, frameHeight: 40, endFrame: 4 });
   this.load.image('point', pointImage);
   this.load.image('enemybullet', enemyBulletImage);
   this.load.audio('song', song);
@@ -77,6 +89,7 @@ function create () {
   gameModules.player = new Player(gameModules, this);
   gameModules.enemy = new Enemy(gameModules, this);
   gameModules.weapon = new Weapon(gameModules, this);
+  gameModules.hitspark = new HitsparkManager(gameModules, this);
 
   this.sound.play('song', { volume: 0.5, loop: true });
 
@@ -101,8 +114,7 @@ function create () {
 
 function update () {
   //  Scroll the frames
-  const speed = gameModules.player.speed;
-  gameModules.frames.update(speed);
+  gameModules.frames.update();
   gameModules.player.update();
   if (this.input.mousePointer.primaryDown) {
     if (this.input.mousePointer.x <= 800 &&
@@ -117,8 +129,9 @@ function update () {
   }
 
   gameModules.weapon.update();
-  gameModules.enemy.update(speed);
+  gameModules.enemy.update();
   gameModules.camera.update();
+  gameModules.hitspark.update();
 
   healthText.setText(`HEALTH  ${makeBar(gameModules.player.health / 10)}`);
   dashText.setText(`  DASH  ${makeBar((100 - gameModules.player.dash.wait) / 100)}`);

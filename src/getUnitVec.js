@@ -3,5 +3,5 @@ export default (origin, target) => {
   const distance = Math.sqrt(full.x**2 + full.y**2 + full.z**2);
   // invert y because we live in clown world
   const direction = { x: full.x / distance, y: -full.y / distance, z: full.z / distance };
-  return { origin, direction, target};
+  return { origin, direction, target, distance};
 }
