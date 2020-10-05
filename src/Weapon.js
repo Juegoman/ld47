@@ -1,23 +1,22 @@
 import getClickedPoint from './getClickedPoint';
 import getUnitVec from "./getUnitVec";
 import {LEFT_BOUND, RIGHT_BOUND} from "./constants";
+import GameModule from "./GameModule";
 
-export default class Weapon {
-  constructor(camera, frames, enemy, game) {
-    this.frames = frames;
-    this.camera = camera;
-    this.enemy = enemy;
+export default class Weapon extends GameModule {
+  constructor(gameModules, game) {
+    super(gameModules);
     this.game = game;
     this.activeBullets = [];
-    this.bullets = camera.createMultiple(40, 'point', 0, false)
-      .map((b, i) => new Bullet(i, b, frames, this));
+    this.bullets = this.camera.createMultiple(40, 'point', 0, false)
+      .map((b, i) => new Bullet(i, b, this.frames, this));
     this.wait = 0;
     this.WAIT = 15;
   }
   get activeBulletQty() { return this.activeBullets.length; }
   get bulletPoolQty() { return this.bullets.length; }
   fire(x, y) {
-    if (this.wait > 0) return;
+    if (!this.player.alive || this.wait > 0) return;
 
     let target = getClickedPoint(x, y, this.camera, this.frames);
     const origin = {x: this.camera.x, y: -60, z: 600};

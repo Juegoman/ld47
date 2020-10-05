@@ -1,18 +1,20 @@
 import {curveFn, DEPTH, FRAME_PERIOD} from './constants';
+import GameModule from './GameModule';
 
-export default class Frames {
-  constructor(camera) {
-    const ground = camera.createRect({x: 1, y: 1, z: DEPTH}, FRAME_PERIOD, 'strip', 0);
+export default class Frames extends GameModule {
+  constructor(gameModules) {
+    super(gameModules);
+    const ground = this.camera.createRect({x: 1, y: 1, z: DEPTH}, FRAME_PERIOD, 'strip', 0);
     ground.forEach((f, i) => {
       f.y = curveFn(i);
     });
 
-    const ceiling = camera.createRect({x: 1, y: 1, z: DEPTH}, FRAME_PERIOD, 'strip', 0);
+    const ceiling = this.camera.createRect({x: 1, y: 1, z: DEPTH}, FRAME_PERIOD, 'strip', 0);
     ceiling.forEach((c, i) => {
       c.y = -300 + curveFn(i);
     })
 
-    const walls = camera.createRect({x: 2, y: 1, z: DEPTH}, {x: 500, y: 0, z: FRAME_PERIOD}, 'vertstrip', 0);
+    const walls = this.camera.createRect({x: 2, y: 1, z: DEPTH}, {x: 500, y: 0, z: FRAME_PERIOD}, 'vertstrip', 0);
     const lWalls = [];
     const rWalls = [];
     walls.forEach((w, i) => {
@@ -24,7 +26,7 @@ export default class Frames {
         rWalls.push(w);
       }
     })
-    this.frames = [];
+    this._frames = [];
     for (let i = 0; i < DEPTH; i++) {
       const res = {
         ground: ground[i],
@@ -36,25 +38,24 @@ export default class Frames {
       res.ceiling.gameObject.setFrame(i % 4);
       res.lWall.gameObject.setFrame(i % 4);
       res.rWall.gameObject.setFrame(i % 4);
-      this.frames.push(res);
+      this._frames.push(res);
     }
-    this.camera = camera;
     this.startZ = this.getFrame(0).ground.z;
     this.distanceTravelled = 0;
   }
   getFrame(index) {
-    return this.frames[index];
+    return this._frames[index];
   }
   get sorted() {
-    const sorted = [...this.frames];
+    const sorted = [...this._frames];
     sorted.sort((a, b) => b.ground.z - a.ground.z);
     return sorted;
   }
   findClosestFrame(z) {
-    return this.frames.reduce((closest, current) => ((Math.abs(closest.ground.z - z) < Math.abs(current.ground.z - z)) ? closest : current));
+    return this._frames.reduce((closest, current) => ((Math.abs(closest.ground.z - z) < Math.abs(current.ground.z - z)) ? closest : current));
   }
   update(speed) {
-    this.frames.forEach(({ ground, ceiling, lWall, rWall }) => {
+    this._frames.forEach(({ ground, ceiling, lWall, rWall }) => {
       ground.z += speed;
       ceiling.z += speed;
       lWall.z += speed;

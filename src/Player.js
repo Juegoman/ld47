@@ -1,12 +1,13 @@
-import {LEFT_BOUND, RIGHT_BOUND} from "./constants";
-import Phaser from "phaser";
+import {LEFT_BOUND, RIGHT_BOUND} from './constants';
+import Phaser from 'phaser';
+import GameModule from './GameModule';
 
-export default class Player {
-  constructor(camera, game) {
+export default class Player extends GameModule {
+  constructor(gameModules, game) {
+    super(gameModules);
     this.game = game;
-    this.camera = camera;
-    this.legs = camera.create(0, -48, 600, 'character', 0);
-    this.torso = camera.create(0, -48, 600, 'character', 4);
+    this.legs = this.camera.create(0, -48, 600, 'character', 0);
+    this.torso = this.camera.create(0, -48, 600, 'character', 4);
     this.speed = 3
     this.cursors = game.input.keyboard.addKeys({
       'up': Phaser.Input.Keyboard.KeyCodes.W,
@@ -77,6 +78,9 @@ export default class Player {
       this.legs.x = this.camera.x;
       this.torso.x = this.camera.x;
 
+      if (this.collidingWithEnemy) {
+
+      }
       this.speed = 3;
       if (this.cursors.up.isDown) {
         this.speed = 5;
@@ -97,10 +101,16 @@ export default class Player {
       this.torso.visible = false;
       this.legs.y = 1000;
       this.torso.y = 1000;
+      this.game.sound.play('explode');
+    } else {
+      this.game.sound.play('hit');
     }
   }
 
   get alive() {
     return this.health > 0;
+  }
+  get collidingWithEnemy() {
+
   }
 }

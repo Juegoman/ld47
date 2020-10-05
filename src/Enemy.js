@@ -1,16 +1,15 @@
 import {DEPTH, LEFT_BOUND, RIGHT_BOUND} from "./constants";
 import { Bullet } from './Weapon';
 import getUnitVec from "./getUnitVec";
+import GameModule from "./GameModule";
 
-export default class Enemy {
-  constructor(camera, frames, player, game) {
-    this.camera = camera;
-    this.frames = frames;
-    this.player = player;
+export default class Enemy extends GameModule {
+  constructor(gameModules, game) {
+    super(gameModules)
     this.game = game;
     this.enemyList = [];
-    this.turrets = camera.createMultiple(10, 'turret', 0, false)
-      .map((t, i) => new Turret(i, t, frames, camera, player, game));
+    this.turrets = this.camera.createMultiple(10, 'turret', 0, false)
+      .map((t, i) => new Turret(i, t, this.frames, this.camera, this.player, this.game));
     this.nextEnemyFrame = 100;
   }
   update(speed) {
@@ -106,10 +105,14 @@ class Turret {
     return this;
   }
   hit() {
-    console.log('hit!')
-    this.health -= (this.health) ? 1 : 0;
-    if (this.health === 0) {
-      this.sprite.gameObject.setFrame(this.SPRITESHEET[`${this.orientation}Dead`]);
+    if (this.alive) {
+      this.health -= (this.health) ? 1 : 0;
+      if (this.health === 0) {
+        this.sprite.gameObject.setFrame(this.SPRITESHEET[`${this.orientation}Dead`]);
+        this.game.sound.play('explode');
+      } else {
+        this.game.sound.play('hit');
+      }
     }
   }
   get alive() {
