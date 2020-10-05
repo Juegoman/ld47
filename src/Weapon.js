@@ -96,7 +96,7 @@ export class Bullet {
       const target = {x: enemy.x, y: enemy.y, z: enemy.z};
       const full = { x: target.x - x, y: target.y - y, z: target.z - z };
       const distance = Math.sqrt(full.x**2 + full.y**2 + full.z**2);
-      return distance < 30;
+      return distance < 50;
     });
     return (hit.length > 0) ? hit[0].id : null;
   }

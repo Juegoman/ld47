@@ -30,6 +30,11 @@ export default class Player extends GameModule {
       frameRate: 6,
       repeat: -1,
     });
+    scene.anims.create({
+      key: 'dead',
+      frames: scene.anims.generateFrameNumbers('character', { frames: [5] }),
+      repeat: -1,
+    });
     this.legs.gameObject.play('walk');
     this.combos = {
       AA: scene.input.keyboard.createCombo('AA', { resetOnMatch: true, maxKeyDelay: 235 }),
@@ -100,10 +105,9 @@ export default class Player extends GameModule {
     this.health -= (this.health) ? 1 : 0;
     if (this.health === 0) {
       this.speed = 0;
-      this.legs.visible = false;
       this.torso.visible = false;
-      this.legs.y = 1000;
       this.torso.y = 1000;
+      this.legs.gameObject.play('dead');
       this.scene.sound.play('explode');
     } else {
       this.scene.sound.play('hit', { volume: 0.5 });

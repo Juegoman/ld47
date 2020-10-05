@@ -21,7 +21,7 @@ export default function (x, y, camera, frames, enemyList) {
     }
     if (pos.z < camera.z) {
       enemyList.forEach(enemy => {
-        if (!found && enemy.type === 'drone' && getUnitVec(pos, enemy.coords).distance < 30) {
+        if (!found && enemy.type === 'drone' && getUnitVec(pos, enemy.coords).distance < 50) {
           pos = { ...enemy.coords };
           found = true
         }
