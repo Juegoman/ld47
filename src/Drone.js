@@ -11,36 +11,61 @@ export default class Drone extends EnemyBase {
     this.sleepTimer = 100;
     // states: spawningFront, spawningBack, idle, shoot3, shoot2, shoot1, reposition, dying, dead
     this.state = 'dead'
-    this.destination = { x: 0, y: 0, z: 0 };
+    this.destination = null;
     
     this.SPRITESHEET = {
       alive1: 0,
       alive2: 1,
-      dead: 3,
+      dead: 2,
     };
 
     this.BOUNDS = {
       posX: RIGHT_BOUND - 50,
       negX: LEFT_BOUND + 50,
-      posY: -150,
-      negY: -230,
+      posY: -190,
+      negY: -270,
       posZ: PLAYER_Z - 200,
-      negZ: -400,
+      negZ: -100,
     }
 
     this.SPEED = 5;
   }
+  get alive() {
+    return this.health > 0;
+  }
+  get active() {
+    return this.sprite.visible && this.player.alive;
+  }
+  hit() {
+    if (this.alive) {
+      this.health -= (this.health) ? 1 : 0;
+      if (this.health === 0) {
+        this.state = 'dying'
+      }
+      this.scene.sound.play('hit', { volume: 0.5 });
+    }
+  }
   spawn() {
     // get destination
-    this.destination = this.randomPointinBounds();
+    this.destination = this.randomPointInBounds();
     // spawning from front or back?
-    const isFront = (getRndInteger(0, 1);
+    const isFront = getRndInteger(0, 1);
     this.setX(this.destination.x);
     this.setZ((isFront) ? this.parent.frames.startZ : this.camera.z + DEPTH);
     this.setY((isFront) ? this.calculatedY : this.destination.y);
     this.state = `spawning${(isFront) ? 'Front' : 'Back'}`;
+    this.activate();
+    return this;
   }
-  randomPointinBounds() {
+  activate(value = true) {
+    this.sleepTimer = 100;
+    this.sprite.visible = value;
+    if (value) {
+      this.health = 10;
+      this.sprite.gameObject.play('drone', true);
+    }
+  }
+  randomPointInBounds() {
     return {
       x: getRndInteger(this.BOUNDS.negX, this.BOUNDS.posX),
       y: getRndInteger(this.BOUNDS.negY, this.BOUNDS.posY),
@@ -69,7 +94,7 @@ export default class Drone extends EnemyBase {
         }
         return false;
       case 'idle':
-        this.decrementSleep()
+        this.decrementSleep();
         return false;
       case 'shoot3':
       case 'shoot2':
@@ -77,40 +102,43 @@ export default class Drone extends EnemyBase {
         if (!this.sleepTimer) {
           this.fire();
         }
-        this.decrementSleep()
+        this.decrementSleep();
         return false;
       case 'reposition':
         this.goToDestination();
         return false;
       case 'dying':
-        this.setZ(this.z + this.parent.player.speed)
-        this.setY(this.y + 10);
-        if (this.y < this.currentFrame.ground.y - 30) {
-          this.setY(this.currentFrame.ground.y - 30);
-          this.sprite.gameObject.setFrame(this.SPRITESHEET.dead);
-          this.scene.sound.play('explode');
-          return this.z > (this.camera.z + DEPTH);
-        }
+        this.setY(this.currentFrame.ground.y - 30);
+        this.sprite.gameObject.play('dronedead', true);
+        this.scene.sound.play('explode');
+        this.state = 'dead';
+        return this.z > (this.camera.z + DEPTH);
       case 'dead':
         this.setZ(this.z + this.parent.player.speed)
-        this.setY(this.currentFrame.ground.y -30);
+        this.setY(this.currentFrame.ground.y - 30);
         return this.z > (this.camera.z + DEPTH);
       default:
         return true;
     }
   }
   goToDestination() {
+    if (this.destination === null)  this.destination = this.randomPointInBounds();
     const destinationVec = getUnitVec({ x: this.x, y: this.y, z: this.z }, this.destination)
-    if (destinationVec.distance < 6) {
-      this.state = 'idle';
-    }
     this.setX(this.x + (destinationVec.direction.x * this.SPEED));
     this.setY(this.y - (destinationVec.direction.y * this.SPEED));
     this.setZ(this.z + (destinationVec.direction.z * this.SPEED));
+    if (destinationVec.distance < 7) {
+      this.state = 'idle';
+      this.destination = null;
+    }
   }
   fire() {
     if (!['shoot3', 'shoot2', 'shoot1'].includes(this.state) || this.sleepTimer > 0) return;
-    const target = this.player.coords;
+    const target = {
+      x: this.player.x + getRndInteger(-10, 10),
+      y: this.player.y + getRndInteger(-10, 10),
+      z: this.player.z + getRndInteger(-10, 10),
+    };
     const origin = this.coords;
     if (origin.z - target.z < 0) {
       const bullet = this.bullets.pop();

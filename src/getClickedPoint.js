@@ -1,6 +1,7 @@
 import {RIGHT_BOUND, LEFT_BOUND, DEPTH} from './constants';
+import getUnitVec from "./getUnitVec";
 
-export default function (x, y, camera, frames) {
+export default function (x, y, camera, frames, enemyList) {
   let ray = camera.getPickRay(x, y);
   ray.direction.y *= -1;
 
@@ -19,6 +20,12 @@ export default function (x, y, camera, frames) {
       z: frame.ground.z
     }
     if (pos.z < camera.z) {
+      enemyList.forEach(enemy => {
+        if (!found && enemy.type === 'drone' && getUnitVec(pos, enemy.coords).distance < 30) {
+          pos = { ...enemy.coords };
+          found = true
+        }
+      })
       if (pos.x < LEFT_BOUND - 10) {
         pos.x = LEFT_BOUND;
         found = true;
