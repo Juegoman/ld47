@@ -6,7 +6,7 @@ export default class EnemyBase {
     this.sprite = sprite3d;
     this.parent = parent;
     this.activeBullets = []
-    this.bullets = this.camera.createMultiple(10, 'enemybullet', 0, false)
+    this.bullets = this.camera.createMultiple(15, 'enemybullet', 0, false)
       .map((b, i) => new EnemyBullet(i, b, this.frames, this));
     this.TYPE = type;
   }

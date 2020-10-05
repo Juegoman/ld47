@@ -36,6 +36,7 @@ export default class Turret extends EnemyBase {
       if (this.health === 0) {
         this.sprite.gameObject.setFrame(this.SPRITESHEET[`${this.orientation}Dead`]);
         this.scene.sound.play('explode');
+        this.player.addScore(150);
       } else {
         this.scene.sound.play('hit', { volume: 0.5 });
       }
@@ -53,7 +54,7 @@ export default class Turret extends EnemyBase {
         this.sleepTimer -= 1;
       } else {
         this.fire();
-        this.sleepTimer = 100
+        this.sleepTimer = (this.player.hyperMode) ? 40 : 100;
       }
     }
     return this.z > (this.camera.z + DEPTH);
@@ -80,7 +81,7 @@ export default class Turret extends EnemyBase {
     this.sleepTimer = 100;
     this.sprite.visible = value;
     if (value) {
-      this.health = 4;
+      this.health = (this.player.hyperMode) ? 10 : 4;
       this.setZ(this.frames.startZ);
     }
   }

@@ -24,7 +24,7 @@ export default class Weapon extends GameModule {
     bullet.fire(getUnitVec(origin, target));
     this.activeBullets.push(bullet);
     this.scene.sound.play('pew');
-    this.wait = this.WAIT;
+    this.wait = (this.player.hyperMode) ? 5 : this.WAIT;
   }
   update() {
     const cleanup = [];
@@ -92,6 +92,7 @@ export class Bullet {
   }
   get targetBoundsCheck() {
     const hit = this.parent.enemy.enemyList.filter(enemy => {
+      if (!enemy.alive) return false;
       const { x, y, z } = this;
       const target = {x: enemy.x, y: enemy.y, z: enemy.z};
       const full = { x: target.x - x, y: target.y - y, z: target.z - z };

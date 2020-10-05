@@ -16,29 +16,25 @@ export default class Player extends GameModule {
       'right': Phaser.Input.Keyboard.KeyCodes.D
     });
     this.health = 10
+    this.enemiesScore = 0;
 
 
     scene.anims.create({
       key: 'walk',
-      frames: scene.anims.generateFrameNumbers('character', { frames: [1, 3, 2, 3] }),
+      frames: scene.anims.generateFrameNumbers('character', {frames: [1, 3, 2, 3]}),
       frameRate: 3,
       repeat: -1,
     });
     scene.anims.create({
       key: 'run',
-      frames: scene.anims.generateFrameNumbers('character', { frames: [1, 3, 2, 3] }),
+      frames: scene.anims.generateFrameNumbers('character', {frames: [1, 3, 2, 3]}),
       frameRate: 6,
-      repeat: -1,
-    });
-    scene.anims.create({
-      key: 'dead',
-      frames: scene.anims.generateFrameNumbers('character', { frames: [5] }),
       repeat: -1,
     });
     this.legs.gameObject.play('walk');
     this.combos = {
-      AA: scene.input.keyboard.createCombo('AA', { resetOnMatch: true, maxKeyDelay: 235 }),
-      DD: scene.input.keyboard.createCombo('DD', { resetOnMatch: true, maxKeyDelay: 235 }),
+      AA: scene.input.keyboard.createCombo('AA', {resetOnMatch: true, maxKeyDelay: 235}),
+      DD: scene.input.keyboard.createCombo('DD', {resetOnMatch: true, maxKeyDelay: 235}),
     }
     this.dash = {
       wait: 0,
@@ -56,6 +52,7 @@ export default class Player extends GameModule {
       }
     });
   }
+
   update() {
     if (this.alive) {
       if (this.cursors.left.isDown) {
@@ -101,42 +98,60 @@ export default class Player extends GameModule {
 
     }
   }
+
   hit() {
     this.health -= (this.health) ? 1 : 0;
     if (this.health === 0) {
       this.speed = 0;
-      this.torso.visible = false;
-      this.torso.y = 1000;
-      this.legs.gameObject.play('dead');
+      this.legs.visible = false;
+      this.legs.y = 1000;
+      this.torso.gameObject.setFrame(5);
       this.scene.sound.play('explode');
     } else {
-      this.scene.sound.play('hit', { volume: 0.5 });
+      this.scene.sound.play('hit', {volume: 0.5});
     }
+  }
+  // easter egg
+  get hyperMode() {
+    return this.player.score > 40000;
+  }
+
+  get score() {
+    return this.frames.distanceTravelled + this.enemiesScore;
+  }
+
+  addScore(num) {
+    this.enemiesScore += num;
   }
 
   get alive() {
     return this.health > 0;
   }
+
   get collidingWithEnemy() {
     const hit = this.enemy.enemyList.filter(enemy => {
-      const { x, y, z } = this;
+      const {x, y, z} = this;
       const target = {x: enemy.x, y: enemy.y, z: enemy.z};
-      const full = { x: target.x - x, y: target.y - y, z: target.z - z };
-      const distance = Math.sqrt(full.x**2 + full.y**2 + full.z**2);
+      const full = {x: target.x - x, y: target.y - y, z: target.z - z};
+      const distance = Math.sqrt(full.x ** 2 + full.y ** 2 + full.z ** 2);
       return distance < 30 && enemy.alive;
     });
     return hit.length > 0;
   }
+
   get x() {
     return this.camera.x;
   }
+
   get y() {
     return PLAYER_Y;
   }
+
   get z() {
     return PLAYER_Z;
   }
+
   get coords() {
-    return { x: this.x, y: this.y, z: this.z };
+    return {x: this.x, y: this.y, z: this.z};
   }
 }

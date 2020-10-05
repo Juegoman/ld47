@@ -10,7 +10,7 @@ export default class Drone extends EnemyBase {
 
     this.sleepTimer = 100;
     // states: spawningFront, spawningBack, idle, shoot3, shoot2, shoot1, reposition, dying, dead
-    this.state = 'dead'
+    this.state = 'dead';
     this.destination = null;
     
     this.SPRITESHEET = {
@@ -41,6 +41,7 @@ export default class Drone extends EnemyBase {
       this.health -= (this.health) ? 1 : 0;
       if (this.health === 0) {
         this.state = 'dying'
+        this.player.addScore(500);
       }
       this.scene.sound.play('hit', { volume: 0.5 });
     }
@@ -61,7 +62,7 @@ export default class Drone extends EnemyBase {
     this.sleepTimer = 100;
     this.sprite.visible = value;
     if (value) {
-      this.health = 10;
+      this.health = (this.player.hyperMode) ? 20 : 10;
       this.sprite.gameObject.play('drone', true);
     }
   }
@@ -96,6 +97,9 @@ export default class Drone extends EnemyBase {
       case 'idle':
         this.decrementSleep();
         return false;
+      case 'shoot6':
+      case 'shoot5':
+      case 'shoot4':
       case 'shoot3':
       case 'shoot2':
       case 'shoot1':
@@ -133,7 +137,7 @@ export default class Drone extends EnemyBase {
     }
   }
   fire() {
-    if (!['shoot3', 'shoot2', 'shoot1'].includes(this.state) || this.sleepTimer > 0) return;
+    if (!this.state.includes('shoot') || this.sleepTimer > 0) return;
     const target = {
       x: this.player.x + getRndInteger(-10, 10),
       y: this.player.y + getRndInteger(-10, 10),
@@ -154,7 +158,7 @@ export default class Drone extends EnemyBase {
     }
     if (this.state === 'idle') {
       if (getRndInteger(0, 1)) {
-        this.state = 'shoot3';
+        this.state = (this.player.hyperMode) ? 'shoot6' : 'shoot3';
         this.sleepTimer = 10;
         return;
       } else {
@@ -163,15 +167,16 @@ export default class Drone extends EnemyBase {
         return;
       }
     }
-    if (['shoot3', 'shoot2'].includes(this.state)) {
-      this.state = (this.state === 'shoot3') ? 'shoot2' : 'shoot1';
+    if (this.state.includes('shoot')) {
+      const iter = Number(this.state.split('shoot')[1]);
+      const nextState = `shoot${iter - 1}`;
+      if (nextState === 'shoot0') {
+        this.state = 'idle';
+        this.sleepTimer = 100;
+        return;
+      }
+      this.state = nextState;
       this.sleepTimer = 10;
-      return;
-    }
-    if (this.state === 'shoot1') {
-      this.state = 'idle';
-      this.sleepTimer = 100;
-      return;
     }
   }
 }
