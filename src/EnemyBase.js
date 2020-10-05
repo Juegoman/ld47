@@ -31,5 +31,6 @@ export default class EnemyBase {
   get frames() { return this.parent.frames; }
   get camera() { return this.parent.camera; }
   get player() { return this.parent.player; }
+  get hitspark() { return this.parent.hitspark; }
   get scene() { return this.parent.scene; }
 }

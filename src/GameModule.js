@@ -17,4 +17,7 @@ export default class GameModule {
   get enemy() {
     return this.gameModules.enemy;
   }
+  get hitspark() {
+    return this.gameModules.hitspark;
+  }
 }

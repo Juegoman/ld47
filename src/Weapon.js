@@ -72,7 +72,7 @@ export class Bullet {
     return false;
   }
   hitspark() {
-    // todo
+    this.parent.hitspark.spawn(this.x, this.y, this.z);
   }
   cleanUp() {
     this.bullet.x = 0;
