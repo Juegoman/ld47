@@ -61,7 +61,7 @@ class EnemyBullet extends Bullet {
   }
   get targetBoundsCheck() {
     const { x, y, z } = this;
-    const target = {x: this.parent.camera.x, y: -60, z: 600};
+    const target = {x: this.parent.player.x, y: this.parent.player.y, z: this.parent.player.z};
     const full = { x: target.x - x, y: target.y - y, z: target.z - z };
     const distance = Math.sqrt(full.x**2 + full.y**2 + full.z**2);
     return distance < 5;
@@ -111,7 +111,7 @@ class Turret {
         this.sprite.gameObject.setFrame(this.SPRITESHEET[`${this.orientation}Dead`]);
         this.game.sound.play('explode');
       } else {
-        this.game.sound.play('hit');
+        this.game.sound.play('hit', { volume: 0.5 });
       }
     }
   }
@@ -144,8 +144,8 @@ class Turret {
   }
   fire() {
     if (this.sleepTimer > 0) return;
-    const target = {x: this.camera.x, y: -60, z: 600};
-    const origin = {x: this.calculatedX, y: this.calculatedY, z: this.z};
+    const target = {x: this.player.x, y: this.player.y, z: this.player.z};
+    const origin = {x: this.x, y: this.y, z: this.z};
     if (origin.z - target.z < 0) {
       const bullet = this.bullets.pop();
       bullet.fire(getUnitVec(origin, target));
@@ -172,7 +172,6 @@ class Turret {
   }
   randomizeOrientation() {
     this.setOrientation(this.DIRECTIONS[getRndInteger(0, 3)]);
-    // this.setOrientation('down');
   }
   setOrientation(direction) {
     this.orientation = direction;

@@ -124,10 +124,10 @@ function update () {
   dashText.setText(`  DASH  ${makeBar((100 - gameModules.player.dash.wait) / 100)}`);
 
   if (!gameModules.player.alive && deathText === null) {
-    deathText = this.add.text(180, 180, '', { backgroundColor: '#646161', font: '32px Arial', fill: '#f6451a', align: 'center', padding: { x: 20, y: 20 } });
+    deathText = this.add.text(180, 200, '', { backgroundColor: '#646161', font: '32px Arial', fill: '#f6451a', align: 'center', padding: { x: 20, y: 20 } });
     deathText.setText([
       'You Died',
-      'Restart by pressing any key',
+      'Restart by pressing space',
     ]);
   }
 }

@@ -19,7 +19,7 @@ export default class Weapon extends GameModule {
     if (!this.player.alive || this.wait > 0) return;
 
     let target = getClickedPoint(x, y, this.camera, this.frames);
-    const origin = {x: this.camera.x, y: -60, z: 600};
+    const origin = {x: this.player.x, y: this.player.y, z: this.player.z};
     const bullet = this.bullets.pop();
     bullet.fire(getUnitVec(origin, target));
     this.activeBullets.push(bullet);

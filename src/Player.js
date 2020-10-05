@@ -1,4 +1,4 @@
-import {LEFT_BOUND, RIGHT_BOUND} from './constants';
+import {LEFT_BOUND, PLAYER_Y, PLAYER_Z, RIGHT_BOUND} from './constants';
 import Phaser from 'phaser';
 import GameModule from './GameModule';
 
@@ -79,18 +79,21 @@ export default class Player extends GameModule {
       this.torso.x = this.camera.x;
 
       if (this.collidingWithEnemy) {
-
-      }
-      this.speed = 3;
-      if (this.cursors.up.isDown) {
-        this.speed = 5;
-        this.legs.gameObject.play('run', true);
-      } else {
+        this.speed = 0;
         this.legs.gameObject.play('walk', true);
-        if (this.cursors.down.isDown) {
-          this.speed = 1;
+      } else {
+        this.speed = 3;
+        if (this.cursors.up.isDown) {
+          this.speed = 5;
+          this.legs.gameObject.play('run', true);
+        } else {
+          this.legs.gameObject.play('walk', true);
+          if (this.cursors.down.isDown) {
+            this.speed = 1;
+          }
         }
       }
+
     }
   }
   hit() {
@@ -103,7 +106,7 @@ export default class Player extends GameModule {
       this.torso.y = 1000;
       this.game.sound.play('explode');
     } else {
-      this.game.sound.play('hit');
+      this.game.sound.play('hit', { volume: 0.5 });
     }
   }
 
@@ -111,6 +114,22 @@ export default class Player extends GameModule {
     return this.health > 0;
   }
   get collidingWithEnemy() {
-
+    const hit = this.enemy.enemyList.filter(enemy => {
+      const { x, y, z } = this;
+      const target = {x: enemy.x, y: enemy.y, z: enemy.z};
+      const full = { x: target.x - x, y: target.y - y, z: target.z - z };
+      const distance = Math.sqrt(full.x**2 + full.y**2 + full.z**2);
+      return distance < 30 && enemy.alive;
+    });
+    return hit.length > 0;
+  }
+  get x() {
+    return this.camera.x;
+  }
+  get y() {
+    return PLAYER_Y;
+  }
+  get z() {
+    return PLAYER_Z;
   }
 }
