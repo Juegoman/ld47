@@ -32,8 +32,8 @@ export default class Player extends GameModule {
     });
     this.legs.gameObject.play('walk');
     this.combos = {
-      AA: game.input.keyboard.createCombo('AA', { resetOnMatch: true, maxKeyDelay: 300 }),
-      DD: game.input.keyboard.createCombo('DD', { resetOnMatch: true, maxKeyDelay: 300 }),
+      AA: game.input.keyboard.createCombo('AA', { resetOnMatch: true, maxKeyDelay: 235 }),
+      DD: game.input.keyboard.createCombo('DD', { resetOnMatch: true, maxKeyDelay: 235 }),
     }
     this.dash = {
       wait: 0,
