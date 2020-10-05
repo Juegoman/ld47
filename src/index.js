@@ -21,6 +21,11 @@ import characterImage from './assets/guy.png';
 import pointImage from './assets/point.png';
 import turretImage from './assets/turret.png';
 import enemyBulletImage from './assets/orangedot.png';
+import droneImage from './assets/droneludum2020.png';
+import fireParticle1 from './assets/fire1.png';
+import fireParticle2 from './assets/fire2.png';
+import fireParticle3 from './assets/fire3.png';
+import smokeParticle from './assets/smoke.png';
 import song from './assets/LDgametrack.mp3';
 import pewSound from './assets/shoot.wav';
 import bangSound from './assets/gunshot.wav';
@@ -56,9 +61,10 @@ let game = new Phaser.Game(config);
 
 function preload () {
   this.load.spritesheet('strip', checkerboard, { frameWidth: 160, frameHeight: 50 });
-  this.load.spritesheet('vertstrip', verticalCheckerboard, { frameWidth: 64, frameHeight: 160 })
-  this.load.spritesheet('character', characterImage, { frameHeight: 56, frameWidth: 32 });
+  this.load.spritesheet('vertstrip', verticalCheckerboard, { frameWidth: 64, frameHeight: 160 });
+  this.load.spritesheet('character', characterImage, { frameWidth: 32, frameHeight: 56 });
   this.load.spritesheet('turret', turretImage, { frameWidth: 48, frameHeight: 48 });
+  this.load.spritesheet('drone', droneImage, { frameWidth: 68, frameHeight: 43 });
   this.load.image('point', pointImage);
   this.load.image('enemybullet', enemyBulletImage);
   this.load.audio('song', song);
@@ -101,8 +107,7 @@ function create () {
 
 function update () {
   //  Scroll the frames
-  const speed = gameModules.player.speed;
-  gameModules.frames.update(speed);
+  gameModules.frames.update();
   gameModules.player.update();
   if (this.input.mousePointer.primaryDown) {
     if (this.input.mousePointer.x <= 800 &&
@@ -117,7 +122,7 @@ function update () {
   }
 
   gameModules.weapon.update();
-  gameModules.enemy.update(speed);
+  gameModules.enemy.update();
   gameModules.camera.update();
 
   healthText.setText(`HEALTH  ${makeBar(gameModules.player.health / 10)}`);

@@ -54,12 +54,12 @@ export default class Frames extends GameModule {
   findClosestFrame(z) {
     return this._frames.reduce((closest, current) => ((Math.abs(closest.ground.z - z) < Math.abs(current.ground.z - z)) ? closest : current));
   }
-  update(speed) {
+  update() {
     this._frames.forEach(({ ground, ceiling, lWall, rWall }) => {
-      ground.z += speed;
-      ceiling.z += speed;
-      lWall.z += speed;
-      rWall.z += speed;
+      ground.z += this.player.speed;
+      ceiling.z += this.player.speed;
+      lWall.z += this.player.speed;
+      rWall.z += this.player.speed;
       if (ground.z > (this.camera.z + DEPTH)) {
         ground.z = this.startZ;
         ceiling.z = this.startZ;

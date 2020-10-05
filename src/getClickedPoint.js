@@ -18,21 +18,23 @@ export default function (x, y, camera, frames) {
       y: ray.origin.y + ray.direction.y * frameTime,
       z: frame.ground.z
     }
-    if (pos.x < LEFT_BOUND - 10) {
-      pos.x = LEFT_BOUND;
-      found = true;
-    }
-    if (pos.x > RIGHT_BOUND + 10) {
-      pos.x = RIGHT_BOUND;
-      found = true;
-    }
-    if (pos.y < frame.ceiling.y + 25) {
-      pos.y = frame.ceiling.y + 25;
-      found = true;
-    }
-    if (pos.y > frame.ground.y - 25) {
-      pos.y = frame.ground.y - 25;
-      found = true;
+    if (pos.z < camera.z) {
+      if (pos.x < LEFT_BOUND - 10) {
+        pos.x = LEFT_BOUND;
+        found = true;
+      }
+      if (pos.x > RIGHT_BOUND + 10) {
+        pos.x = RIGHT_BOUND;
+        found = true;
+      }
+      if (pos.y < frame.ceiling.y + 25) {
+        pos.y = frame.ceiling.y + 25;
+        found = true;
+      }
+      if (pos.y > frame.ground.y - 25) {
+        pos.y = frame.ground.y - 25;
+        found = true;
+      }
     }
     hitFrame += 1;
   }
